@@ -30,6 +30,7 @@ Onboarding rule: the first onboarding question must ask for the company or produ
 - Runtime Codex is launched by Colombo for each Slack investigation with `codex exec --sandbox read-only`.
 - Onboarding should show value before Slack/Docker launch details: verify Codex on the VPS, summarize the website, add GitHub as the first source, scan code, and show a GitHub-backed demo answer.
 - GitHub repository/code is the mandatory first connected source. The add-new-source skill owns GitHub setup, code scanning, relevant integration detection, demo answers, and follow-on source recommendations.
+- When onboarding is ambiguous, optimize for first-session activation: explain the step, minimize owner work, use read-only tools to discover facts, show a demo answer early, and defer Slack/Docker details until after value is shown.
 - Runtime Codex config should be minimal and contain only Colombo-approved MCP servers. Do not blindly copy the owner's full Codex config into the container.
 - `AGENTS.md` is Colombo's company-specific operating manual. Keep rights policy, runbooks, connected-system rules, and answer contracts here whenever they are short enough to stay readable.
 - Larger system cards may live in `workspace/connected-systems/`, but this file must summarize when to use each system and what not to conclude from it.

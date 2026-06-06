@@ -43,13 +43,23 @@ test("repo-scoped Colombo skills exist and encode onboarding/source/improvement 
   assert.match(onboarding, /What is your company or product website/);
   assert.match(onboarding, /fetch the public website, draft a concise product\/company summary/);
   assert.match(onboarding, /GitHub repository\/code must be the first connected source/);
+  assert.match(onboarding, /First-session principles/);
+  assert.match(onboarding, /Explain before asking/);
+  assert.match(onboarding, /Show value early/);
+  assert.match(onboarding, /Do the work when possible/);
+  assert.match(onboarding, /Before asking for product repo access, explain/);
   assert.match(onboarding, /\$colombo-add-new-source` owns all data-source logic/);
   assert.match(onboarding, /Do not ask for Slack, Docker, or runtime launch details until Colombo has produced a useful demo answer/);
   assert.match(onboarding, /minimal runtime Codex config/);
 
   assert.match(addSource, /name: colombo-add-new-source/);
   assert.match(addSource, /MCP is the tool\/access layer/);
-  assert.match(addSource, /GitHub repository\/code is the mandatory first source/);
+  assert.match(addSource, /Source setup principles/);
+  assert.match(addSource, /GitHub\/GitLab code access is the first source/);
+  assert.match(addSource, /read-only GitHub\/GitLab MCP access/);
+  assert.doesNotMatch(addSource, /clone the private repo/i);
+  assert.doesNotMatch(addSource, /send me the path/i);
+  assert.match(addSource, /GitHub or GitLab repository\/code is the mandatory first source/);
   assert.match(addSource, /Detect third-party integrations from code and filter them before asking the owner/);
   assert.match(addSource, /Do not suggest low-value implementation dependencies/);
   assert.match(addSource, /Fetch a narrow safe sample/);

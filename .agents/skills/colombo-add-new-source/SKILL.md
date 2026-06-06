@@ -11,6 +11,15 @@ Important: the user may say "source," but in Colombo's architecture the source i
 
 Onboarding calls this skill whenever a data source is required. All source-specific reasoning belongs here, not in `$colombo-onboarding`.
 
+## Source setup principles
+
+- Start with a friendly explanation of why this source is useful, what Colombo will inspect, and what the owner will get from it.
+- GitHub/GitLab code access is the first source because it reveals the real integrations, services, jobs, SDKs, and operational systems behind the product.
+- For private repos, ask for read-only GitHub/GitLab MCP access; do not suggest manual cloning as the default path.
+- Use MCP/local evidence to discover the repo, inspect code, generate a demo answer, and recommend next sources.
+- Use a local repo only when it is already available and clearly matches the approved product summary.
+- If the current checkout is Colombo itself, explain that Colombo needs the owner's product repo instead of scanning the setup repo as product code.
+
 ## Required behavior
 
 - Ask one question at a time.
@@ -24,7 +33,7 @@ Onboarding calls this skill whenever a data source is required. All source-speci
 ## Source flow
 
 1. Identify the real source of truth being added. Examples: GitHub repo, Grafana, Loki, Stripe, PostHog, Amplitude, Postgres, customer admin DB, deploy system, docs/wiki.
-2. Discover whether a matching MCP server or local read-only access already exists.
+2. Discover whether a matching MCP server or already-present local read-only source exists.
 3. If access is missing, give the minimal setup instruction for this source and pause until the owner confirms it is configured.
 4. Inspect available read-only tools/capabilities.
 5. Fetch a narrow safe sample, metadata preview, schema/list result, or repository slice.
@@ -36,11 +45,15 @@ Onboarding calls this skill whenever a data source is required. All source-speci
 
 ## GitHub-first behavior
 
-GitHub repository/code is the mandatory first source during onboarding.
+GitHub or GitLab repository/code is the mandatory first source during onboarding.
 
-When adding GitHub:
+When adding GitHub or GitLab:
 
-- Prefer GitHub MCP access when available; use local read-only repository access when the relevant repo is already present.
+- Explain first: "The first source Colombo needs is your product repo. I'll use it to understand how your product is built and spot the integrations worth connecting next."
+- Prefer read-only GitHub/GitLab MCP access. Do not ask the owner to manually clone a private product repo as the normal setup path.
+- If a product repo is already present locally and clearly matches the approved product summary, use local read-only repository access.
+- If the current checkout is Colombo itself, say: "This checkout is Colombo itself. I need your product repo so I can find the actual integrations your product uses."
+- For private repos, say: "No problem if it is private. Colombo needs read-only GitHub or GitLab MCP access so I can inspect the product code safely."
 - Inspect README files, package manifests, env examples, Docker/deploy files, imports, SDK usage, config files, service entrypoints, and tests.
 - Identify product services, operational entrypoints, code paths worth asking Colombo about, and recent/change evidence only when available.
 - Generate a demo question about code behavior or operational implementation, then answer it with file paths/functions/classes and clear limitations.

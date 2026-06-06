@@ -9,6 +9,19 @@ Use this skill to turn a freshly cloned Colombo repo into a private company work
 
 The setup experience must feel like a guided product activation, not an interview. The owner should do only the actions that cannot be inferred or safely performed by Codex.
 
+## First-session principles
+
+Use these principles whenever the next onboarding step is unclear:
+
+- Explain before asking: every required owner action must say what is happening, why it matters, and what Colombo will do next.
+- Show value early: get to a real code-backed demo answer before Slack, Docker, or launch details.
+- Ask less, infer more: inspect the website, repo, configs, manifests, and MCP capabilities before asking the owner.
+- One user action at a time: do not dump checklists unless producing the final launch checklist.
+- Do the work when possible: if MCP access lets Colombo discover, read, clone, or inspect something, use it instead of asking the owner to do manual work.
+- Be clear about blockers: when access is missing, ask for the smallest enabling action and explain the payoff.
+- Filter choices: suggest only relevant next sources, never every detected dependency.
+- Keep trust: stay read-only, do not write secrets to tracked files, and do not broadly copy the owner's Codex config.
+
 ## Required behavior
 
 - Ask one question at a time.
@@ -22,6 +35,7 @@ The setup experience must feel like a guided product activation, not an intervie
 - Treat MCP as the access layer, not the source of truth.
 - Treat connected systems as the actual sources: Grafana, Loki, Stripe, PostHog, Amplitude, GitHub, databases, docs, customer systems, deploy systems, etc.
 - GitHub repository/code must be the first connected source. It lets Colombo inspect the actual product implementation and identify relevant next sources.
+- Before asking for product repo access, explain that the first source Colombo needs is the product's GitHub or GitLab repository, because code reveals the real services, integrations, SDKs, config names, jobs, and third-party providers worth connecting next.
 - `$colombo-add-new-source` owns all data-source logic. Onboarding must not duplicate MCP discovery, source sampling, reliability rules, integration detection, demo questions, demo answers, connected-system docs, or test-message generation.
 - Write durable company-specific behavior mostly into `AGENTS.md`.
 - Keep large supporting cards in `workspace/connected-systems/` only when needed, and summarize their operational rules in `AGENTS.md`.
@@ -41,7 +55,7 @@ After the owner answers, fetch the public website, draft a concise product/compa
 1. Confirm the repo is the owner's private Colombo workspace.
 2. Verify `codex --version` works and that Codex can run on the VPS. If not, provide the minimal install/auth instruction and stop there.
 3. Ask the website-first question, fetch the website, summarize the product, ask for approval/correction, then update `AGENTS.md`.
-4. Invoke `$colombo-add-new-source` for `GitHub repository/code` as the first connected source. If the skill is not automatically loaded, read `.agents/skills/colombo-add-new-source/SKILL.md` and follow it.
+4. Explain the GitHub/GitLab-first step in friendly terms, then invoke `$colombo-add-new-source` for `GitHub or GitLab repository/code` as the first connected source. If the skill is not automatically loaded, read `.agents/skills/colombo-add-new-source/SKILL.md` and follow it.
 5. Let `$colombo-add-new-source` configure or verify GitHub MCP/local repo access, scan code, produce a demo Colombo answer, and return a filtered shortlist of relevant next sources.
 6. Ask the owner to choose one next source from the filtered shortlist or stop after GitHub. For every chosen source, invoke `$colombo-add-new-source` again.
 7. After at least the GitHub demo answer is complete, ask which Slack workspace/channel(s) should use Colombo and which Slack users should be allowlisted.
