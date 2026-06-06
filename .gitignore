@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.env
+*.zip
+colombo_product_requirements.md
+*.log
+coverage/
+
+# Runtime state and private workspace output.
+state/
+.var/
+workspace/connected-systems/*.private.md
+workspace/test-messages/*.private.md
+workspace/improvements/pending/*.private.md
+workspace/improvements/applied/*.private.md
+
+# Codex local logs/caches.
+.codex-log/

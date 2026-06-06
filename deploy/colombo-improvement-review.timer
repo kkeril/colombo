@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Colombo improvement review nightly
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+Persistent=true
+Unit=colombo-improvement-review.service
+
+[Install]
+WantedBy=timers.target

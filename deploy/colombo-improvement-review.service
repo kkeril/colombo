@@ -1,0 +1,13 @@
+[Unit]
+Description=Colombo nightly improvement review
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=colombo
+WorkingDirectory=/opt/colombo
+EnvironmentFile=/etc/colombo.env
+ExecStart=/usr/bin/npm run improvement:review
+NoNewPrivileges=true
+PrivateTmp=true

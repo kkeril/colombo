@@ -1,0 +1,19 @@
+[Unit]
+Description=Colombo Slack investigation agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=colombo
+WorkingDirectory=/opt/colombo
+EnvironmentFile=/etc/colombo.env
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=5
+StateDirectory=colombo
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
