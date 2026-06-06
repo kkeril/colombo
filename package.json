@@ -1,7 +1,7 @@
 {
   "name": "colombo-template",
   "version": "0.1.0",
-  "description": "Self-hosted MCP-native operational investigation agent for Slack.",
+  "description": "Answer any operational question in 10 minutes with a Codex-based Slack agent that has read-only MCP access to your tools.",
   "license": "MIT",
   "private": false,
   "type": "module",
