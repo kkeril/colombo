@@ -114,39 +114,46 @@ npm install
 npm run build
 ```
 
-Run the onboarding skill from the repository root:
+Open the cloned repo in Codex and give Codex full permissions for the setup session so it can edit this private workspace and run local setup commands.
+
+Then start onboarding from the repository root:
 
 ```text
 $colombo-onboarding
 ```
 
-The onboarding flow asks for your product description first, then helps describe the connected systems Colombo is allowed to inspect.
+Answer the questions one by one. The onboarding agent does the setup work: it writes your product description into `AGENTS.md`, configures the private workspace, documents connected systems, generates Slack test messages, and gives you the remaining launch checklist.
+
+Do not paste real secrets into tracked files or chat. Put Slack tokens, Codex credentials, and MCP credentials in `/etc/colombo.env` or your local Codex/MCP configuration when onboarding tells you which values are needed.
 
 ## Quick start
 
-Create `/etc/colombo.env` from the example file:
+The fastest path is the onboarding skill, not a manual setup checklist:
+
+```text
+$colombo-onboarding
+```
+
+The skill asks the necessary questions and updates the workspace as it goes. It will guide you through:
+
+- confirming this clone is your private Colombo workspace
+- describing your product so investigations start with the right context
+- choosing which teams and Slack users can use Colombo
+- choosing Codex authentication mode
+- setting the VPS/install paths if you do not use defaults
+- adding MCP-connected systems such as Supabase, ClickHouse, Grafana, Intercom, Stripe, GitHub, PostHog, docs, logs, or databases
+- writing connected-system rules and limitations
+- generating ready-to-copy `@colombo` test prompts
+- listing the env values, Slack scopes/events, MCP servers, and local checks still needed before launch
+
+When onboarding tells you to create the environment file, use:
 
 ```bash
 sudo cp env.example /etc/colombo.env
 sudo editor /etc/colombo.env
 ```
 
-Fill in:
-
-- Slack bot token and app-level token
-- Slack user allowlist
-- Codex executable and workspace paths
-- MCP server names that Codex may use during investigations
-- state directory and queue limits
-
-Build and run locally:
-
-```bash
-npm run build
-npm start
-```
-
-Or install the included systemd service:
+When it tells you to install the service, use:
 
 ```bash
 sudo cp deploy/colombo.service /etc/systemd/system/colombo.service
@@ -159,6 +166,8 @@ Watch service logs:
 ```bash
 journalctl -u colombo -f
 ```
+
+Setup permissions and runtime permissions are different. Codex needs broad local permissions during onboarding so it can update the private workspace. Colombo's Slack investigations still run through `codex exec --sandbox read-only` and should not mutate production systems.
 
 ## Slack app setup
 
