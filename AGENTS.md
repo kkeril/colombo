@@ -17,7 +17,7 @@ Example:
 We operate a B2B SaaS product. Colombo should help engineering, support, and founders investigate production health, customer issues, conversion/revenue changes, deploy impact, and where behavior is implemented in code.
 ```
 
-Onboarding rule: the first onboarding question must ask the owner for this product description. Keep a concise version here so every investigation starts with the product reality in context.
+Onboarding rule: the first onboarding question must ask for the company or product website. Setup Codex should fetch the public website, draft a concise product description, ask the owner to approve or correct it, then write the approved summary here before continuing. Keep a concise version here so every investigation starts with the product reality in context.
 
 ## Core architecture
 
@@ -28,6 +28,9 @@ Onboarding rule: the first onboarding question must ask the owner for this produ
 - Colombo is normally cloned and onboarded on the owner's VPS, then run 24/7 with Docker Compose.
 - Setup Codex runs during onboarding with permission to edit the private Colombo workspace and prepare local deployment commands.
 - Runtime Codex is launched by Colombo for each Slack investigation with `codex exec --sandbox read-only`.
+- Onboarding should show value before Slack/Docker launch details: verify Codex on the VPS, summarize the website, add GitHub as the first source, scan code, and show a GitHub-backed demo answer.
+- GitHub repository/code is the mandatory first connected source. The add-new-source skill owns GitHub setup, code scanning, relevant integration detection, demo answers, and follow-on source recommendations.
+- Runtime Codex config should be minimal and contain only Colombo-approved MCP servers. Do not blindly copy the owner's full Codex config into the container.
 - `AGENTS.md` is Colombo's company-specific operating manual. Keep rights policy, runbooks, connected-system rules, and answer contracts here whenever they are short enough to stay readable.
 - Larger system cards may live in `workspace/connected-systems/`, but this file must summarize when to use each system and what not to conclude from it.
 

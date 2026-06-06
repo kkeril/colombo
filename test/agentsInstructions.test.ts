@@ -13,7 +13,7 @@ test("AGENTS.md defines Colombo product concept, MCP model, and answer contract"
   assert.match(instructions, /MCP is not itself a source of truth/);
   assert.match(instructions, /Connected systems are the real systems of record/);
   assert.match(instructions, /## Product description/);
-  assert.match(instructions, /the first onboarding question must ask the owner for this product description/);
+  assert.match(instructions, /the first onboarding question must ask for the company or product website/);
   assert.match(instructions, /\*Summary:\* one short sentence/);
   assert.match(instructions, /\*Evidence checked:\*/);
   assert.match(instructions, /\*Not checked \/ limitations:\*/);
@@ -40,13 +40,20 @@ test("repo-scoped Colombo skills exist and encode onboarding/source/improvement 
   const improvement = await fs.readFile(new URL("../.agents/skills/colombo-improvement-review/SKILL.md", import.meta.url), "utf8");
 
   assert.match(onboarding, /name: colombo-onboarding/);
-  assert.match(onboarding, /The first question must be/);
-  assert.match(onboarding, /update the `## Product description` section in `AGENTS.md` immediately/);
-  assert.match(onboarding, /Invoke `\$colombo-add-new-source`/);
+  assert.match(onboarding, /What is your company or product website/);
+  assert.match(onboarding, /fetch the public website, draft a concise product\/company summary/);
+  assert.match(onboarding, /GitHub repository\/code must be the first connected source/);
+  assert.match(onboarding, /\$colombo-add-new-source` owns all data-source logic/);
+  assert.match(onboarding, /Do not ask for Slack, Docker, or runtime launch details until Colombo has produced a useful demo answer/);
+  assert.match(onboarding, /minimal runtime Codex config/);
 
   assert.match(addSource, /name: colombo-add-new-source/);
   assert.match(addSource, /MCP is the tool\/access layer/);
-  assert.match(addSource, /What MCP server name exposes this system/);
+  assert.match(addSource, /GitHub repository\/code is the mandatory first source/);
+  assert.match(addSource, /Detect third-party integrations from code and filter them before asking the owner/);
+  assert.match(addSource, /Do not suggest low-value implementation dependencies/);
+  assert.match(addSource, /Fetch a narrow safe sample/);
+  assert.match(addSource, /Generate one realistic operational question from the source sample and answer it/);
   assert.match(addSource, /Dynamic Slack test message rules/);
 
   assert.match(improvement, /name: colombo-improvement-review/);

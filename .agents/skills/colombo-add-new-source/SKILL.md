@@ -1,6 +1,6 @@
 ---
 name: colombo-add-new-source
-description: Use when adding a new Colombo connected system/source. Captures the real system of record, MCP server/tools, reliability, limitations, rights policy, runbook behavior, and dynamic Slack test messages.
+description: Use when adding a new Colombo connected system/source. Owns source setup end to end: MCP discovery, safe sample reads, GitHub code scanning, relevant next-source detection, reliability rules, redaction rules, demo answers, runtime MCP config, and Slack test messages.
 ---
 
 # Colombo add new source skill
@@ -9,25 +9,63 @@ This skill adds a new connected system to Colombo.
 
 Important: the user may say "source," but in Colombo's architecture the source is the real connected system. MCP is the tool/access layer used to reach it.
 
-## Ask one question at a time
+Onboarding calls this skill whenever a data source is required. All source-specific reasoning belongs here, not in `$colombo-onboarding`.
 
-Collect these answers before editing files:
+## Required behavior
 
-1. What real system are we adding? Examples: Grafana, Loki, GitHub repo, Stripe, PostHog, Amplitude, Postgres, customer admin DB, deploy system, docs/wiki.
-2. What MCP server name exposes this system to Codex? Example: `grafana`, `logs`, `github`, `stripe`, `posthog`, `database`.
-3. Which read-only tools/capabilities does that MCP server expose?
-4. What questions should Colombo answer with this system?
-5. What is this system reliable for?
-6. What is this system not reliable for?
-7. What must Colombo never conclude from this system alone?
-8. Which other systems should cross-check it?
-9. What data from this system is sensitive and must be redacted or summarized?
-10. Which Slack users/channels/question classes should be allowed to use it?
-11. What are 3-7 real test questions the owner would actually ask in Slack?
+- Ask one question at a time.
+- Inspect before asking whenever the answer can be discovered safely.
+- Use read-only MCP tools, local repo reads, and safe metadata/sample queries only.
+- Never ask for secrets. Ask the owner to configure credentials in the local Codex/MCP config or the minimal Colombo runtime Codex config.
+- Do not blindly copy the owner's full Codex config. Add only owner-approved MCP server definitions to `/etc/colombo/codex` for runtime.
+- Do not add every detected integration. Filter for operational relevance and ask the owner to choose.
+- Ask the owner to approve or correct high-impact assumptions before writing durable rules.
+
+## Source flow
+
+1. Identify the real source of truth being added. Examples: GitHub repo, Grafana, Loki, Stripe, PostHog, Amplitude, Postgres, customer admin DB, deploy system, docs/wiki.
+2. Discover whether a matching MCP server or local read-only access already exists.
+3. If access is missing, give the minimal setup instruction for this source and pause until the owner confirms it is configured.
+4. Inspect available read-only tools/capabilities.
+5. Fetch a narrow safe sample, metadata preview, schema/list result, or repository slice.
+6. Infer likely use cases, reliability, limitations, sensitive fields, cross-checks, and what Colombo must not conclude from this system alone.
+7. Ask the owner to approve or correct only the high-impact assumptions.
+8. Generate one realistic operational question from the source sample and answer it in Colombo's Slack answer format as a demo.
+9. Add this MCP server to the minimal runtime Codex config for Colombo only after the owner approves the source.
+10. Update `AGENTS.md`, optional source card, and generated Slack test messages.
+
+## GitHub-first behavior
+
+GitHub repository/code is the mandatory first source during onboarding.
+
+When adding GitHub:
+
+- Prefer GitHub MCP access when available; use local read-only repository access when the relevant repo is already present.
+- Inspect README files, package manifests, env examples, Docker/deploy files, imports, SDK usage, config files, service entrypoints, and tests.
+- Identify product services, operational entrypoints, code paths worth asking Colombo about, and recent/change evidence only when available.
+- Generate a demo question about code behavior or operational implementation, then answer it with file paths/functions/classes and clear limitations.
+- Detect third-party integrations from code and filter them before asking the owner what to add next.
+
+Relevant next-source candidates usually include:
+
+- observability metrics
+- logs/traces
+- payments
+- product analytics
+- databases/customer state
+- deploy/change systems
+- support/ticketing
+- docs/runbooks
+- queues/background jobs
+- auth/email/integration providers when they are operationally important
+
+Do not suggest low-value implementation dependencies such as UI libraries, build tools, test frameworks, lint tools, generic utilities, type packages, or transitive dependencies. Group related SDKs under the real system, for example `@sentry/*` as Sentry or `stripe` as Stripe.
+
+When presenting next sources, show a shortlist of 2-5 choices maximum. Put the recommended next source first and include the code evidence that made each source relevant.
 
 ## Update files
 
-After collecting answers:
+After source assumptions are approved:
 
 1. Add or update a compact entry under `## Connected systems registry` in `AGENTS.md`.
 2. If details are longer than a compact entry, create `workspace/connected-systems/<slug>.md` with:
@@ -44,10 +82,11 @@ After collecting answers:
    - example answer expectations
 3. Create or update `workspace/test-messages/<slug>.md` with realistic ready-to-copy Slack tests.
 4. Add any new runbook rules to `AGENTS.md` if they should guide every future investigation.
+5. Update deployment notes or setup checklist only when needed to reflect the approved runtime MCP config. Do not write secrets.
 
 ## Dynamic Slack test message rules
 
-Test messages must be specific to the owner's system and purpose. Avoid toy prompts.
+Test messages must be specific to the owner's actual system, sampled data shape, repository structure, and purpose. Avoid toy prompts.
 
 For observability systems, generate tests about live health, anomaly windows, segmentation, and deploy correlation.
 For logs/traces, generate tests about error patterns, customer/request drilldowns, and timing.
@@ -56,6 +95,7 @@ For payments, generate tests about payment state, revenue movement, failed charg
 For product analytics, generate tests about funnels, activation, retention, cohorts, and cross-checking payments/deploys.
 For databases/customer systems, generate tests about customer state, account/order status, safe summaries, and blast radius.
 For docs/runbooks, generate tests about known procedures, caveats, and what to check next.
+For GitHub/code, generate tests about implementation paths, relevant tests, ownership, detected integrations, and what runtime source must be cross-checked before concluding live behavior.
 
 ## Quality bar
 
@@ -67,3 +107,5 @@ The final update should make Colombo better at deciding:
 - what other systems should verify it
 - what data must not be pasted into Slack
 - what answer format is expected
+- what first demo answer proves and what it does not prove
+- which relevant next sources were detected and why unrelated dependencies were ignored
