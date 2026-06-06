@@ -25,6 +25,9 @@ Onboarding rule: the first onboarding question must ask the owner for this produ
 - Codex is the investigator that plans, calls tools, correlates evidence, and writes the answer.
 - MCP is the access layer. MCP is not itself a source of truth.
 - Connected systems are the real systems of record exposed through MCP tools.
+- Colombo is normally cloned and onboarded on the owner's VPS, then run 24/7 with Docker Compose.
+- Setup Codex runs during onboarding with permission to edit the private Colombo workspace and prepare local deployment commands.
+- Runtime Codex is launched by Colombo for each Slack investigation with `codex exec --sandbox read-only`.
 - `AGENTS.md` is Colombo's company-specific operating manual. Keep rights policy, runbooks, connected-system rules, and answer contracts here whenever they are short enough to stay readable.
 - Larger system cards may live in `workspace/connected-systems/`, but this file must summarize when to use each system and what not to conclude from it.
 

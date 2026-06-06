@@ -1,0 +1,43 @@
+name: colombo
+
+services:
+  colombo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CODEX_VERSION: ${CODEX_VERSION:-0.136.0}
+    image: colombo:local
+    restart: unless-stopped
+    init: true
+    env_file:
+      - path: /etc/colombo.env
+        required: false
+    environment:
+      NODE_ENV: production
+      HOME: /home/node
+      CODEX_HOME: /home/node/.codex
+      XDG_CACHE_HOME: /var/lib/colombo/.cache
+      XDG_DATA_HOME: /var/lib/colombo/.local/share
+      TMPDIR: /tmp
+      codex_bin: codex
+      codex_workdir: /opt/colombo
+      colombo_dir: /opt/colombo
+      agent_instructions_file: AGENTS.md
+      state_dir: /var/lib/colombo
+    volumes:
+      - type: bind
+        source: .
+        target: /opt/colombo
+      - type: bind
+        source: /etc/colombo/codex
+        target: /home/node/.codex
+      - type: bind
+        source: /var/lib/colombo
+        target: /var/lib/colombo
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

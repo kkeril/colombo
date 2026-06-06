@@ -1,0 +1,15 @@
+.git
+.codex-log
+.env
+coverage
+dist
+node_modules
+state
+.var
+*.log
+*.zip
+colombo_product_requirements.md
+workspace/connected-systems/*.private.md
+workspace/test-messages/*.private.md
+workspace/improvements/pending/*.private.md
+workspace/improvements/applied/*.private.md

@@ -5,12 +5,15 @@ description: Use when setting up a new private Colombo workspace. Interviews the
 
 # Colombo onboarding skill
 
-Use this skill to turn a freshly cloned Colombo repo into a private company workspace.
+Use this skill to turn a freshly cloned Colombo repo into a private company workspace on the VPS where Colombo will run.
 
 ## Required behavior
 
 - Ask one question at a time.
 - Do not ask for secrets. Ask the owner to place secrets in their local Codex/MCP config or `/etc/colombo.env`.
+- Treat the default setup model as VPS-first: the owner SSHes to the VPS, clones Colombo there, runs Codex from that checkout, and runs Colombo 24/7 with Docker Compose.
+- Explain the two Codex roles when useful: setup Codex runs during onboarding with workspace/deployment permissions; runtime Codex is launched by Colombo for Slack investigations with read-only sandboxing.
+- Confirm Docker and Docker Compose are available on the VPS. If they are missing, guide the owner to install them before launch and include that in the final checklist.
 - Treat MCP as the access layer, not the source of truth.
 - Treat connected systems as the actual sources: Grafana, Loki, Stripe, PostHog, Amplitude, GitHub, databases, docs, customer systems, deploy systems, etc.
 - Write durable company-specific behavior mostly into `AGENTS.md`.
@@ -35,14 +38,20 @@ After the owner answers, update the `## Product description` section in `AGENTS.
 5. Ask which Codex authentication mode the owner wants to use:
    - user/account authentication
    - API token authentication
-6. Ask where Colombo will run on the VPS and update the README/setup notes only if the owner wants non-default paths.
-7. Ask which connected system to add first.
-8. Invoke `$colombo-add-new-source` for that connected system. If the skill is not automatically loaded, read `.agents/skills/colombo-add-new-source/SKILL.md` and follow it.
-9. Repeat `$colombo-add-new-source` until the owner says there are no more initial systems.
-10. Generate a short launch checklist in the final response:
+6. Confirm Codex is installed and authenticated on this VPS, and that its MCP server config is present or will be placed under `/etc/colombo/codex` for Docker runtime.
+7. Confirm Docker and Docker Compose are installed on this VPS. If either is missing, provide the owner with the install step for their OS and pause deployment-specific commands until it is available.
+8. Ask where Colombo should live on the VPS. Default to `/opt/colombo`; update setup notes only if the owner chooses a non-default path.
+9. Ask which connected system to add first.
+10. Invoke `$colombo-add-new-source` for that connected system. If the skill is not automatically loaded, read `.agents/skills/colombo-add-new-source/SKILL.md` and follow it.
+11. Repeat `$colombo-add-new-source` until the owner says there are no more initial systems.
+12. Generate a short launch checklist in the final response:
     - env file values still needed
+    - Codex config location for Docker runtime, usually `/etc/colombo/codex`
     - MCP servers still needed
     - Slack app scopes/events to verify
+    - Docker paths to create: `/etc/colombo.env`, `/etc/colombo/codex`, `/var/lib/colombo`
+    - Codex config copy/permission commands when relevant: `sudo rsync -a ~/.codex/ /etc/colombo/codex/` and `sudo chown -R 1000:1000 /opt/colombo /etc/colombo/codex /var/lib/colombo`
+    - Docker commands to run: `docker compose build`, `docker compose up -d`, `docker compose logs -f colombo`
     - generated test messages to run
     - local checks to run
 
@@ -50,6 +59,7 @@ After the owner answers, update the `## Product description` section in `AGENTS.
 
 - `AGENTS.md`
 - `env.example` only for generic template defaults, not private secrets
+- `compose.yaml` and Docker setup notes only for generic template defaults, not private secrets
 - `workspace/connected-systems/*.md`
 - `workspace/test-messages/*.md`
 - `workspace/runbooks/*.md`
@@ -60,4 +70,5 @@ After the owner answers, update the `## Product description` section in `AGENTS.
 - `AGENTS.md` contains the company product description.
 - At least one connected system is documented or the owner explicitly chose to stop before adding systems.
 - Every added connected system has MCP server name, use cases, limitations, cross-check rules, sensitive-data rules, and generated Slack test messages.
+- Docker launch requirements are clear: `/etc/colombo.env`, `/etc/colombo/codex`, `/var/lib/colombo`, and `docker compose up -d`.
 - No secrets or private credentials are written to git-tracked files.
