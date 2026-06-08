@@ -36,6 +36,10 @@ function tomlString(value: string): string {
   return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
+function tomlStringArray(values: string[]): string {
+  return `[${values.map(tomlString).join(",")}]`;
+}
+
 export function createCodexEnv(source: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
 
@@ -50,7 +54,7 @@ export function createCodexEnv(source: NodeJS.ProcessEnv = process.env): NodeJS.
 
 export function buildCodexArgs(config: AppConfig, request: OpsRequest, finalPath: string): string[] {
   void request;
-  const agentsPath = resolveAgentInstructionsPath(config.colomboDir, config.agentInstructionsFile);
+  const agentsPath = resolveAgentInstructionsPath(config.colomboDir);
   const args = [
     "exec",
     "--ephemeral",
@@ -70,8 +74,22 @@ export function buildCodexArgs(config: AppConfig, request: OpsRequest, finalPath
     args.push("-c", `mcp_servers.${serverName}.enabled=false`);
   }
 
+  const disabledServers = new Set(config.disabledMcpServerNames);
   for (const serverName of config.mcpServerNames) {
-    args.push("-c", `mcp_servers.${serverName}.default_tools_approval_mode="approve"`);
+    if (disabledServers.has(serverName)) {
+      continue;
+    }
+
+    const enabledTools = config.mcpEnabledTools[serverName];
+    if (enabledTools?.length) {
+      args.push("-c", `mcp_servers.${serverName}.enabled_tools=${tomlStringArray(enabledTools)}`);
+      args.push("-c", `mcp_servers.${serverName}.default_tools_approval_mode="approve"`);
+      continue;
+    }
+
+    if (config.allowAllMcpTools) {
+      args.push("-c", `mcp_servers.${serverName}.default_tools_approval_mode="approve"`);
+    }
   }
 
   args.push("-o", finalPath, "-");
@@ -163,7 +181,7 @@ export async function runCodex(
   });
 
   const finishedAt = new Date().toISOString();
-  const finalMessage = await fs.readFile(finalPath, "utf8").catch(() => "");
+  const finalMessage = redactSensitive(await fs.readFile(finalPath, "utf8").catch(() => ""));
   const status = timedOut ? "timed_out" : exitCode === 0 ? "completed" : "failed";
   const stderrTail = trimLines(stderrLines, 12);
   const result: CodexResult = {

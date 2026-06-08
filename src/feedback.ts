@@ -3,12 +3,11 @@ import path from "node:path";
 import { redactSensitive } from "./redact.js";
 import type { CodexProgressSignal, CodexResult, OpsRequest } from "./types.js";
 
-export type FeedbackRating = "positive" | "partial" | "negative";
+export type FeedbackRating = "positive" | "negative";
 export type FeedbackStatus =
   | "awaiting_reaction"
   | "positive"
   | "pending_clarification"
-  | "partial_with_clarification"
   | "negative_with_clarification"
   | "expired_no_clarification";
 
@@ -26,6 +25,7 @@ export interface PendingFeedbackIndex extends FeedbackResultIndex {
   reaction: string;
   reactionTs: string;
   expiresAt: string;
+  clarificationPromptTs?: string;
 }
 
 export interface PendingFeedback extends PendingFeedbackIndex {
@@ -50,7 +50,6 @@ export interface FeedbackRecord extends FeedbackResultIndex {
 }
 
 export const POSITIVE_FEEDBACK_REACTIONS = new Set(["+1", "thumbsup"]);
-export const PARTIAL_FEEDBACK_REACTIONS = new Set(["thinking_face", "neutral_face"]);
 export const NEGATIVE_FEEDBACK_REACTIONS = new Set(["poop", "hankey"]);
 
 function safeKey(value: string): string {
@@ -132,7 +131,7 @@ export class FeedbackStore {
     await fs.mkdir(this.jobDir(jobId), { recursive: true });
   }
 
-  private async readFeedback(jobId: string): Promise<FeedbackRecord | undefined> {
+  async readFeedback(jobId: string): Promise<FeedbackRecord | undefined> {
     const text = await fs.readFile(this.feedbackPath(jobId), "utf8").catch(() => "");
     if (!text) {
       return undefined;
@@ -283,10 +282,6 @@ export class FeedbackStore {
     return record;
   }
 
-  async recordPartial(index: FeedbackResultIndex, reaction: string, reactionTs: string): Promise<FeedbackRecord> {
-    return this.recordNeedsClarification(index, "partial", reaction, reactionTs);
-  }
-
   async recordNegative(index: FeedbackResultIndex, reaction: string, reactionTs: string): Promise<FeedbackRecord> {
     return this.recordNeedsClarification(index, "negative", reaction, reactionTs);
   }
@@ -308,6 +303,7 @@ export class FeedbackStore {
       reactionUserId: index.requesterUserId,
       reactionTs,
       expiresAt,
+      clarificationPromptTs: existing?.clarificationPromptTs,
       createdAt: existing?.createdAt ?? timestamp,
       updatedAt: timestamp
     };
@@ -316,7 +312,8 @@ export class FeedbackStore {
       rating,
       reaction,
       reactionTs,
-      expiresAt
+      expiresAt,
+      clarificationPromptTs: existing?.clarificationPromptTs
     };
 
     await fs.mkdir(this.pendingIndexDir(), { recursive: true });
@@ -349,6 +346,14 @@ export class FeedbackStore {
         updatedAt: nowIso(this.now)
       })
     );
+    if (clarificationPromptTs) {
+      const pendingPath = this.pendingIndexPath(index);
+      const pendingText = await fs.readFile(pendingPath, "utf8").catch(() => "");
+      if (pendingText) {
+        const pending = JSON.parse(pendingText) as PendingFeedbackIndex;
+        await fs.writeFile(pendingPath, jsonPretty({ ...pending, clarificationPromptTs }));
+      }
+    }
     await this.appendWorkLog(index.jobId, {
       type: "feedback_clarification_requested",
       ...(clarificationPromptTs ? { clarificationPromptTs } : {})
@@ -414,7 +419,7 @@ export class FeedbackStore {
     const existing = await this.readFeedback(pending.jobId);
     const record: FeedbackRecord = {
       ...pending,
-      status: pending.rating === "partial" ? "partial_with_clarification" : "negative_with_clarification",
+      status: "negative_with_clarification",
       rating: pending.rating,
       reaction: pending.reaction,
       reactionUserId: pending.requesterUserId,

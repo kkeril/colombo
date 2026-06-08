@@ -8,12 +8,21 @@ Type=simple
 User=colombo
 WorkingDirectory=/opt/colombo
 EnvironmentFile=/etc/colombo.env
-ExecStart=/usr/bin/npm run start
+Environment=NODE_ENV=production
+Environment=CODEX_HOME=/etc/colombo/codex
+Environment=XDG_CACHE_HOME=/var/lib/colombo/.cache
+Environment=XDG_DATA_HOME=/var/lib/colombo/.local/share
+Environment=TMPDIR=/tmp
+ExecStart=/usr/bin/node /opt/colombo/dist/src/index.js
 Restart=on-failure
 RestartSec=5
 StateDirectory=colombo
 NoNewPrivileges=true
 PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/colombo /etc/colombo/codex
+ReadWritePaths=/var/lib/colombo
 
 [Install]
 WantedBy=multi-user.target

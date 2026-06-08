@@ -10,6 +10,7 @@ services:
     image: colombo:local
     restart: unless-stopped
     init: true
+    read_only: true
     env_file:
       - path: /etc/colombo.env
         required: false
@@ -26,17 +27,23 @@ services:
       agent_instructions_file: AGENTS.md
       state_dir: /var/lib/colombo
     volumes:
+      # Colombo/Codex reads the checked-out repo as investigation context; it should not write here at runtime.
       - type: bind
         source: .
         target: /opt/colombo
+        read_only: true
+      # Minimal runtime Codex config with only Colombo-approved MCP servers and read-only credentials.
       - type: bind
         source: /etc/colombo/codex
         target: /home/node/.codex
+        read_only: true
+      # Job state, final summaries, feedback records, and Codex cache/data live here.
       - type: bind
         source: /var/lib/colombo
         target: /var/lib/colombo
     tmpfs:
-      - /tmp
+      # Temporary files only; removed when the container stops.
+      - /tmp:rw,nosuid,nodev
     security_opt:
       - no-new-privileges:true
     cap_drop:

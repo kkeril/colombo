@@ -1,6 +1,7 @@
 .git
 .codex-log
 .env
+.env.*
 coverage
 dist
 node_modules
@@ -8,7 +9,14 @@ state
 .var
 *.log
 *.zip
+*.tar
+*.tar.gz
 colombo_product_requirements.md
+__MACOSX
+.DS_Store
+._*
+workspace/private
+workspace/**/*.private.md
 workspace/connected-systems/*.private.md
 workspace/test-messages/*.private.md
 workspace/improvements/pending/*.private.md

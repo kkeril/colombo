@@ -17,6 +17,11 @@ const config: AppConfig = {
   stateDir: "/var/lib/colombo",
   mcpServerNames: ["grafana", "stripe"],
   disabledMcpServerNames: ["gitlab"],
+  mcpEnabledTools: {
+    grafana: ["query", "list_dashboards"],
+    stripe: ["get_customer"]
+  },
+  allowAllMcpTools: false,
   maxConcurrentJobs: 1,
   maxQueueSize: 5,
   jobTimeoutMs: 1000,
@@ -40,7 +45,7 @@ const request: OpsRequest = {
   threadMessages: []
 };
 
-test("buildCodexArgs uses configured workdir, AGENTS.md, and MCP server names", () => {
+test("buildCodexArgs uses configured workdir, AGENTS.md, and MCP enabled tools", () => {
   const args = buildCodexArgs(config, request, "/tmp/final.md");
 
   assert.deepEqual(args.slice(0, 3), ["exec", "--ephemeral", "--json"]);
@@ -48,11 +53,43 @@ test("buildCodexArgs uses configured workdir, AGENTS.md, and MCP server names", 
   assert.equal(args[args.indexOf("-C") + 1], "/workspace");
   assert.equal(args.includes('model_instructions_file="/workspace/colombo/AGENTS.md"'), true);
   assert.equal(args.includes("mcp_servers.gitlab.enabled=false"), true);
+  assert.equal(args.includes('mcp_servers.grafana.enabled_tools=["query","list_dashboards"]'), true);
+  assert.equal(args.includes('mcp_servers.stripe.enabled_tools=["get_customer"]'), true);
   assert.equal(args.includes('mcp_servers.grafana.default_tools_approval_mode="approve"'), true);
   assert.equal(args.includes('mcp_servers.stripe.default_tools_approval_mode="approve"'), true);
   assert.equal(args[args.indexOf("-o") + 1], "/tmp/final.md");
   assert.equal(args.at(-1), "-");
   assert.equal(args.some((arg) => arg.includes("status api")), false);
+});
+
+test("buildCodexArgs supports explicit all-tools MCP escape hatch", () => {
+  const args = buildCodexArgs(
+    {
+      ...config,
+      mcpEnabledTools: {},
+      allowAllMcpTools: true
+    },
+    request,
+    "/tmp/final.md"
+  );
+
+  assert.equal(args.includes('mcp_servers.grafana.enabled_tools=["query","list_dashboards"]'), false);
+  assert.equal(args.includes('mcp_servers.grafana.default_tools_approval_mode="approve"'), true);
+  assert.equal(args.includes('mcp_servers.stripe.default_tools_approval_mode="approve"'), true);
+});
+
+test("buildCodexArgs always passes canonical AGENTS.md path", () => {
+  const args = buildCodexArgs(
+    {
+      ...config,
+      agentInstructionsFile: "agents.md"
+    },
+    request,
+    "/tmp/final.md"
+  );
+
+  assert.equal(args.includes('model_instructions_file="/workspace/colombo/AGENTS.md"'), true);
+  assert.equal(args.some((arg) => arg.includes("/workspace/colombo/agents.md")), false);
 });
 
 test("createCodexEnv omits slack secrets", () => {

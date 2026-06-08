@@ -1,9 +1,9 @@
 {
-  "name": "colombo-template",
+  "name": "colombo",
   "version": "0.1.0",
-  "description": "Answer any operational question in 10 minutes with a Codex-based Slack agent that has read-only MCP access to your tools.",
+  "description": "Answer any operational question in Slack in minutes with a read-only Codex agent connected to your MCP tools.",
   "license": "MIT",
-  "private": false,
+  "private": true,
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",

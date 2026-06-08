@@ -1,5 +1,6 @@
 import type { CodexResult } from "./types.js";
 import { formatElapsed } from "./progress.js";
+import { redactSensitive } from "./redact.js";
 
 function truncate(text: string, maxChars: number): string {
   if (text.length <= maxChars) {
@@ -31,14 +32,14 @@ export function formatFinalReply(result: CodexResult, maxChars: number, requeste
   const elapsed = Number.isFinite(elapsedMs) ? formatElapsed(elapsedMs) : "unknown";
   const body =
     result.status === "completed" && result.finalMessage.trim().length > 0
-      ? result.finalMessage.trim()
+      ? redactSensitive(result.finalMessage.trim())
       : [
           `*Summary:* Colombo could not complete the investigation (${result.status}).`,
           "*Scope:* Colombo",
           "*Window:* not completed",
           "",
           "*Findings:*",
-          result.error ? `- Error: ${result.error}` : "- No final codex summary was produced.",
+          result.error ? `- Error: ${redactSensitive(result.error)}` : "- No final codex summary was produced.",
           `- Elapsed: ${elapsed}.`,
           "",
           "*Suggested next step:*",
@@ -49,7 +50,7 @@ export function formatFinalReply(result: CodexResult, maxChars: number, requeste
   const footer = [
     `*Job:* \`${result.jobId}\``,
     requesterUserId
-      ? `*Feedback:* <@${requesterUserId}> react with :+1: if this met expectations, :thinking_face: if it partly helped, or :poop: if it missed.`
+      ? `*Feedback:* <@${requesterUserId}> react with :+1: if this met expectations or :poop: if it missed.`
       : ""
   ]
     .filter(Boolean)

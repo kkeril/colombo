@@ -119,7 +119,6 @@ export async function collectFeedbackSummaries(
     .sort((left, right) => {
       const score = (item: FeedbackSummary): number => {
         if (item.feedbackRating === "negative") return 3;
-        if (item.feedbackRating === "partial") return 2;
         if (item.feedbackStatus && item.feedbackStatus !== "positive") return 1;
         return 0;
       };
@@ -187,7 +186,7 @@ function codexBaseArgs(config: AppConfig, sandbox: "read-only" | "workspace-writ
     "-c",
     'approval_policy="never"',
     "-c",
-    `model_instructions_file=${JSON.stringify(resolveAgentInstructionsPath(config.colomboDir, config.agentInstructionsFile))}`,
+    `model_instructions_file=${JSON.stringify(resolveAgentInstructionsPath(config.colomboDir))}`,
     "-o",
     outputPath,
     "-"

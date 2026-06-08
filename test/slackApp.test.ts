@@ -194,6 +194,133 @@ test("positive feedback reaction is recorded silently", async () => {
   assert.equal(feedback.rating, "positive");
 });
 
+test("duplicate negative reactions do not post duplicate clarification prompts", async () => {
+  const posted: Array<{ channel: string; thread_ts: string; text: string }> = [];
+  const client: SlackClient = {
+    chat: {
+      postEphemeral: async () => ({}),
+      postMessage: async (args) => {
+        posted.push(args);
+        return { ts: `1700000000.00010${posted.length}` };
+      },
+      update: async () => ({})
+    },
+    conversations: {
+      replies: async () => ({ messages: [] })
+    },
+    reactions: {
+      add: async () => ({})
+    }
+  };
+  const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), "colombo-feedback-"));
+  const store = new FeedbackStore(stateDir, 86400000, () => new Date("2026-06-05T00:00:00.000Z"));
+  const request: OpsRequest = {
+    jobId: "colombo-test",
+    userId: "U1",
+    channelId: "C1",
+    messageTs: "1700000000.000001",
+    threadTs: "1700000000.000001",
+    promptText: "status api",
+    threadMessages: []
+  };
+  const result: CodexResult = {
+    jobId: "colombo-test",
+    status: "completed",
+    exitCode: 0,
+    finalMessage: "*Summary:* API looks normal.",
+    startedAt: "2026-06-05T00:00:00.000Z",
+    finishedAt: "2026-06-05T00:01:00.000Z"
+  };
+  await store.writeRequest(request);
+  await store.registerFinalResult(request, result, "1700000001.000001");
+
+  await handleFeedbackReaction(store, client, {
+    type: "reaction_added",
+    user: "U1",
+    reaction: "poop",
+    item: { type: "message", channel: "C1", ts: "1700000001.000001" },
+    event_ts: "1780650000.000001"
+  });
+  await handleFeedbackReaction(store, client, {
+    type: "reaction_added",
+    user: "U1",
+    reaction: "poop",
+    item: { type: "message", channel: "C1", ts: "1700000001.000001" },
+    event_ts: "1780650001.000001"
+  });
+
+  assert.equal(posted.length, 1);
+  const feedback = JSON.parse(
+    await fs.readFile(path.join(stateDir, "jobs", "colombo-test", "feedback.json"), "utf8")
+  ) as { status: string; rating?: string; clarificationPromptTs?: string };
+  assert.equal(feedback.status, "pending_clarification");
+  assert.equal(feedback.rating, "negative");
+  assert.equal(feedback.clarificationPromptTs, "1700000000.000101");
+});
+
+test("positive reaction clears pending clarification after negative feedback", async () => {
+  const posted: unknown[] = [];
+  const client: SlackClient = {
+    chat: {
+      postEphemeral: async () => ({}),
+      postMessage: async (args) => {
+        posted.push(args);
+        return { ts: "1700000000.000100" };
+      },
+      update: async () => ({})
+    },
+    conversations: {
+      replies: async () => ({ messages: [] })
+    },
+    reactions: {
+      add: async () => ({})
+    }
+  };
+  const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), "colombo-feedback-"));
+  const store = new FeedbackStore(stateDir, 86400000, () => new Date("2026-06-05T00:00:00.000Z"));
+  const request: OpsRequest = {
+    jobId: "colombo-test",
+    userId: "U1",
+    channelId: "C1",
+    messageTs: "1700000000.000001",
+    threadTs: "1700000000.000001",
+    promptText: "status api",
+    threadMessages: []
+  };
+  const result: CodexResult = {
+    jobId: "colombo-test",
+    status: "completed",
+    exitCode: 0,
+    finalMessage: "*Summary:* API looks normal.",
+    startedAt: "2026-06-05T00:00:00.000Z",
+    finishedAt: "2026-06-05T00:01:00.000Z"
+  };
+  await store.writeRequest(request);
+  await store.registerFinalResult(request, result, "1700000001.000001");
+
+  await handleFeedbackReaction(store, client, {
+    type: "reaction_added",
+    user: "U1",
+    reaction: "poop",
+    item: { type: "message", channel: "C1", ts: "1700000001.000001" },
+    event_ts: "1780650000.000001"
+  });
+  await handleFeedbackReaction(store, client, {
+    type: "reaction_added",
+    user: "U1",
+    reaction: "+1",
+    item: { type: "message", channel: "C1", ts: "1700000001.000001" },
+    event_ts: "1780650001.000001"
+  });
+
+  const feedback = JSON.parse(
+    await fs.readFile(path.join(stateDir, "jobs", "colombo-test", "feedback.json"), "utf8")
+  ) as { status: string; rating?: string };
+  assert.equal(feedback.status, "positive");
+  assert.equal(feedback.rating, "positive");
+  assert.equal(await store.findPendingClarification("C1", "1700000000.000001", "U1"), undefined);
+});
+
 test("feedback reconciliation catches missed negative reaction events", async () => {
   const posted: Array<{ channel: string; thread_ts: string; text: string }> = [];
   const client: SlackClient = {
@@ -271,6 +398,11 @@ test("feedback clarification reconciliation saves missed thread replies", async 
           {
             ts: "1700000002.000001",
             user: "U1",
+            text: "This was before Colombo asked for clarification."
+          },
+          {
+            ts: "1700000004.000001",
+            user: "U1",
             text: "It missed disputes by country."
           }
         ]
@@ -304,6 +436,7 @@ test("feedback clarification reconciliation saves missed thread replies", async 
   const index = await store.findResultIndex("C1", "1700000001.000001");
   assert.ok(index);
   await store.recordNegative(index, "hankey", "2023-11-14T22:13:21.000Z");
+  await store.recordClarificationPrompt(index, "1700000003.000001");
 
   const count = await reconcileFeedbackClarifications(store, client);
 
@@ -316,7 +449,7 @@ test("feedback clarification reconciliation saves missed thread replies", async 
   assert.equal(feedback.status, "negative_with_clarification");
   assert.deepEqual(feedback.clarification, {
     text: "It missed disputes by country.",
-    messageTs: "1700000002.000001",
+    messageTs: "1700000004.000001",
     receivedAt: "2026-06-05T00:00:00.000Z"
   });
 });

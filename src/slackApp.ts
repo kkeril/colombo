@@ -6,7 +6,6 @@ import {
   type FeedbackResultIndex,
   type PendingFeedback,
   NEGATIVE_FEEDBACK_REACTIONS,
-  PARTIAL_FEEDBACK_REACTIONS,
   POSITIVE_FEEDBACK_REACTIONS
 } from "./feedback.js";
 import { JobQueue, QueueFullError } from "./jobQueue.js";
@@ -16,7 +15,7 @@ import { SlackProgressReporter } from "./progress.js";
 import { formatFinalReply } from "./slackFormatting.js";
 import type { AppConfig, OpsRequest, SlackThreadMessage } from "./types.js";
 
-interface AppMentionEvent {
+export interface AppMentionEvent {
   type: "app_mention";
   user?: string;
   channel: string;
@@ -201,6 +200,25 @@ function slackTimestampToIso(timestamp: string | undefined): string {
   return new Date(seconds * 1000).toISOString();
 }
 
+function slackTimestampToSeconds(timestamp: string | undefined): number | undefined {
+  const seconds = Number.parseFloat(timestamp ?? "");
+  return Number.isFinite(seconds) ? seconds : undefined;
+}
+
+function pendingClarificationStartSeconds(pending: PendingFeedback): number {
+  return slackTimestampToSeconds(pending.clarificationPromptTs) ?? Date.parse(pending.reactionTs) / 1000;
+}
+
+function isMessageAfterClarificationPrompt(messageTs: string, pending: PendingFeedback): boolean {
+  const messageSeconds = slackTimestampToSeconds(messageTs);
+  const startSeconds = pendingClarificationStartSeconds(pending);
+  return Boolean(
+    Number.isFinite(messageSeconds) &&
+      Number.isFinite(startSeconds) &&
+      messageSeconds! > startSeconds
+  );
+}
+
 function findRequesterFeedbackReaction(
   messages: unknown[],
   index: FeedbackResultIndex
@@ -214,7 +232,6 @@ function findRequesterFeedbackReaction(
 
   const supportedReactions = new Set([
     ...NEGATIVE_FEEDBACK_REACTIONS,
-    ...PARTIAL_FEEDBACK_REACTIONS,
     ...POSITIVE_FEEDBACK_REACTIONS
   ]);
   const requesterReaction = finalMessage.reactions.find((reaction) => {
@@ -232,22 +249,19 @@ function findRequesterClarification(
   messages: unknown[],
   pending: PendingFeedback
 ): MessageWithReactions | undefined {
-  const afterReactionSeconds = Date.parse(pending.reactionTs) / 1000;
-
   return messages.find((message): message is MessageWithReactions => {
     if (!message || typeof message !== "object") {
       return false;
     }
 
     const item = message as MessageWithReactions;
-    const messageSeconds = Number.parseFloat(item.ts ?? "");
     return Boolean(
       item.user === pending.requesterUserId &&
         item.text &&
         !item.subtype &&
         !item.bot_id &&
-        Number.isFinite(messageSeconds) &&
-        messageSeconds > afterReactionSeconds
+        item.ts &&
+        isMessageAfterClarificationPrompt(item.ts, pending)
     );
   });
 }
@@ -320,7 +334,6 @@ export async function handleFeedbackReaction(
 
   if (
     !POSITIVE_FEEDBACK_REACTIONS.has(reaction) &&
-    !PARTIAL_FEEDBACK_REACTIONS.has(reaction) &&
     !NEGATIVE_FEEDBACK_REACTIONS.has(reaction)
   ) {
     return;
@@ -352,10 +365,15 @@ async function recordFeedbackReaction(
     return;
   }
 
-  if (PARTIAL_FEEDBACK_REACTIONS.has(reaction)) {
-    await feedbackStore.recordPartial(index, reaction, reactionTs);
-  } else {
-    await feedbackStore.recordNegative(index, reaction, reactionTs);
+  const existing = await feedbackStore.readFeedback(index.jobId);
+  const clarificationAlreadyPrompted = Boolean(
+    existing?.status === "pending_clarification" && existing.clarificationPromptTs
+  );
+
+  await feedbackStore.recordNegative(index, reaction, reactionTs);
+
+  if (clarificationAlreadyPrompted) {
+    return;
   }
 
   const promptTs = await postThreadReply(
@@ -448,6 +466,9 @@ export async function handleFeedbackMessage(
 
   const pending = await feedbackStore.findPendingClarification(event.channel, event.thread_ts, event.user);
   if (!pending) {
+    return;
+  }
+  if (!isMessageAfterClarificationPrompt(event.ts, pending)) {
     return;
   }
 
@@ -614,6 +635,43 @@ function startQueuedJob(
   }
 }
 
+export async function handleAppMention(
+  config: AppConfig,
+  queue: JobQueue,
+  client: SlackClient,
+  feedbackStore: FeedbackStore,
+  mention: AppMentionEvent
+): Promise<void> {
+  const user = mention.user;
+  logger.info("received slack app mention", {
+    userId: user ?? "unknown",
+    channelId: mention.channel,
+    messageTs: mention.ts,
+    threadTs: mention.thread_ts ?? mention.ts
+  });
+
+  if (!user || !config.allowedUserIds.has(user)) {
+    logger.warn("rejected slack app mention from non-allowlisted user", {
+      userId: user ?? "unknown",
+      channelId: mention.channel,
+      messageTs: mention.ts
+    });
+    if (user) {
+      await postEphemeral(client, mention.channel, user, "*Colombo is restricted* to allowlisted users.");
+    }
+    return;
+  }
+
+  const promptText = stripBotMention(mention.text ?? "");
+  if (!promptText) {
+    await postEphemeral(client, mention.channel, user, "Tell *Colombo* what to investigate.");
+    return;
+  }
+
+  await addReaction(client, mention.channel, mention.ts, config.slackReaction);
+  startQueuedJob(config, queue, client, feedbackStore, mention, promptText);
+}
+
 export function createSlackApp(config: AppConfig): App {
   const receiver = new SocketModeReceiver({
     appToken: config.slackAppToken,
@@ -652,34 +710,7 @@ export function createSlackApp(config: AppConfig): App {
 
   app.event("app_mention", async ({ event, client }) => {
     const mention = event as AppMentionEvent;
-    const user = mention.user;
-    logger.info("received slack app mention", {
-      userId: user ?? "unknown",
-      channelId: mention.channel,
-      messageTs: mention.ts,
-      threadTs: mention.thread_ts ?? mention.ts
-    });
-
-    if (!user || !config.allowedUserIds.has(user)) {
-      logger.warn("rejected slack app mention from non-allowlisted user", {
-        userId: user ?? "unknown",
-        channelId: mention.channel,
-        messageTs: mention.ts
-      });
-      if (user) {
-        await postEphemeral(client, mention.channel, user, "*Colombo is restricted* to allowlisted users.");
-      }
-      return;
-    }
-
-    const promptText = stripBotMention(mention.text ?? "");
-    if (!promptText) {
-      await postEphemeral(client, mention.channel, user, "Tell *Colombo* what to investigate.");
-      return;
-    }
-
-    await addReaction(client, mention.channel, mention.ts, config.slackReaction);
-    startQueuedJob(config, queue, client, feedbackStore, mention, promptText);
+    await handleAppMention(config, queue, client as unknown as SlackClient, feedbackStore, mention);
   });
 
   app.event("reaction_added", async ({ event, client }) => {

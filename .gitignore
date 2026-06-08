@@ -1,14 +1,23 @@
 node_modules/
 dist/
 .env
+.env.*
+!.env.example
 *.zip
+*.tar
+*.tar.gz
 colombo_product_requirements.md
 *.log
 coverage/
+__MACOSX/
+.DS_Store
+._*
 
 # Runtime state and private workspace output.
 state/
 .var/
+workspace/private/
+workspace/**/*.private.md
 workspace/connected-systems/*.private.md
 workspace/test-messages/*.private.md
 workspace/improvements/pending/*.private.md

@@ -21,7 +21,7 @@ test("formatFinalReply appends job id", () => {
 test("formatFinalReply includes direct feedback prompt for requester", () => {
   const reply = formatFinalReply(baseResult, 1000, "U1");
 
-  assert.match(reply, /\*Feedback:\* <@U1> react with :\+1: if this met expectations, :thinking_face: if it partly helped, or :poop: if it missed\./);
+  assert.match(reply, /\*Feedback:\* <@U1> react with :\+1: if this met expectations or :poop: if it missed\./);
 });
 
 test("formatFinalReply builds failure message", () => {
@@ -55,4 +55,31 @@ test("formatFinalReply preserves feedback prompt when body is truncated", () => 
   assert.match(reply, /truncated/);
   assert.match(reply, /\*Job:\* `colombo-test`/);
   assert.match(reply, /\*Feedback:\* <@U1> react with :\+1:/);
+});
+
+test("formatFinalReply redacts secrets from final output", () => {
+  const reply = formatFinalReply(
+    {
+      ...baseResult,
+      finalMessage: [
+        "*Summary:* Found credentials.",
+        "Slack token xoxb-1234567890-secret",
+        "api_key=sk-live-secret-value",
+        "Authorization: Bearer abc.def.ghi",
+        "password='super-secret'",
+        "-----BEGIN PRIVATE KEY-----",
+        "abc123",
+        "-----END PRIVATE KEY-----"
+      ].join("\n")
+    },
+    2000
+  );
+
+  assert.match(reply, /<hidden>/);
+  assert.match(reply, /<hidden private key>/);
+  assert.doesNotMatch(reply, /xoxb-1234567890-secret/);
+  assert.doesNotMatch(reply, /sk-live-secret-value/);
+  assert.doesNotMatch(reply, /abc\.def\.ghi/);
+  assert.doesNotMatch(reply, /super-secret/);
+  assert.doesNotMatch(reply, /BEGIN PRIVATE KEY/);
 });

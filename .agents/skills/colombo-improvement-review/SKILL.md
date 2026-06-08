@@ -5,38 +5,24 @@ description: Use when reviewing Colombo feedback and proposing owner-approved im
 
 # Colombo improvement review skill
 
-Use this skill for the self-improvement loop.
-
-## Goal
-
-Review stored Slack job feedback and produce small owner-reviewable improvements to Colombo setup files.
+Use this skill for Colombo's self-improvement loop: review stored Slack feedback, find repeat failure patterns, and propose small owner-reviewable setup changes.
 
 ## Rules
 
-- Do not mutate production systems.
-- Do not change external source repositories.
+- Do not mutate production systems or external source repositories.
 - Do not apply improvements without owner approval.
 - Do not add secrets, raw logs, private customer data, or credentials to setup files.
-- Prefer changes to `AGENTS.md` because rights policy, runbooks, source-routing rules, and answer contracts should mostly live there.
-- Use `workspace/connected-systems/*.md` for longer system-specific cards.
-- Use `workspace/test-messages/*.md` for generated regression prompts.
-- Every suggested change must explain which feedback or job pattern caused it.
+- Prefer durable rules in `AGENTS.md`; use `workspace/connected-systems/*.md` only for longer system-specific cards.
+- Put generated regression prompts in `workspace/test-messages/*.md`.
+- Every suggested change must cite the feedback or job pattern that caused it.
 
 ## Review steps
 
-1. Read recent feedback summaries under the configured state directory.
-2. Group weak answers by pattern:
-   - wrong or missing connected system
-   - unsupported conclusion
-   - missing timeline
-   - missing blast radius
-   - missing cross-check
-   - unsafe or too much detail
-   - poor Slack formatting
-   - unclear next step
-3. Propose the smallest durable instruction change that would prevent recurrence.
-4. Add regression Slack test prompts that would catch the issue next time.
-5. Produce Markdown suitable for `workspace/improvements/pending/<date>.md`.
+1. Read recent feedback summaries from the configured state directory.
+2. Group weak answers by Weak-answer patterns: wrong or missing connected system, unsupported conclusion, missing timeline, missing blast radius, missing cross-check, unsafe detail, poor Slack formatting, or unclear next step.
+3. Propose the smallest instruction change that would prevent the pattern from recurring.
+4. Add Slack regression prompts that would catch the issue next time.
+5. Write a Markdown suggestion for `workspace/improvements/pending/<date>.md`.
 
 ## Output format
 

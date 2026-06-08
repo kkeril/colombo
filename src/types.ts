@@ -11,6 +11,8 @@ export interface AppConfig {
   stateDir: string;
   mcpServerNames: string[];
   disabledMcpServerNames: string[];
+  mcpEnabledTools: Record<string, string[]>;
+  allowAllMcpTools: boolean;
   maxConcurrentJobs: number;
   maxQueueSize: number;
   jobTimeoutMs: number;

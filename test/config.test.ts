@@ -18,6 +18,8 @@ test("loadConfig parses required slack inputs and defaults", () => {
   assert.equal(config.colomboDir, "/opt/colombo");
   assert.equal(config.agentInstructionsFile, "AGENTS.md");
   assert.deepEqual(config.mcpServerNames, []);
+  assert.deepEqual(config.mcpEnabledTools, {});
+  assert.equal(config.allowAllMcpTools, false);
   assert.equal(config.progressUpdatesEnabled, true);
   assert.equal(config.progressMinIntervalMs, 60000);
   assert.equal(config.progressHeartbeatMs, 120000);
@@ -70,11 +72,19 @@ test("loadConfig parses MCP server names", () => {
     slack_app_token: "xapp-test",
     slack_allowed_user_ids: "U1",
     codex_mcp_server_names: "grafana, logs,github,grafana",
-    codex_disabled_mcp_server_names: "gitlab"
+    codex_disabled_mcp_server_names: "logs",
+    codex_mcp_enabled_tools: JSON.stringify({
+      grafana: ["query", "list_dashboards", "query"],
+      github: ["search_code", "get_file"]
+    })
   });
 
   assert.deepEqual(config.mcpServerNames, ["grafana", "logs", "github"]);
-  assert.deepEqual(config.disabledMcpServerNames, ["gitlab"]);
+  assert.deepEqual(config.disabledMcpServerNames, ["logs"]);
+  assert.deepEqual(config.mcpEnabledTools, {
+    grafana: ["query", "list_dashboards"],
+    github: ["search_code", "get_file"]
+  });
 });
 
 test("loadConfig rejects unsafe MCP server names", () => {
@@ -88,6 +98,61 @@ test("loadConfig rejects unsafe MCP server names", () => {
       }),
     /invalid MCP server name/
   );
+});
+
+test("loadConfig rejects invalid MCP enabled tools JSON", () => {
+  assert.throws(
+    () =>
+      loadConfig({
+        slack_bot_token: "xoxb-test",
+        slack_app_token: "xapp-test",
+        slack_allowed_user_ids: "U1",
+        codex_mcp_server_names: "grafana",
+        codex_mcp_enabled_tools: "{"
+      }),
+    /codex_mcp_enabled_tools must be valid JSON/
+  );
+});
+
+test("loadConfig rejects unsafe MCP tool names", () => {
+  assert.throws(
+    () =>
+      loadConfig({
+        slack_bot_token: "xoxb-test",
+        slack_app_token: "xapp-test",
+        slack_allowed_user_ids: "U1",
+        codex_mcp_server_names: "grafana",
+        codex_mcp_enabled_tools: JSON.stringify({ grafana: ["query;rm"] })
+      }),
+    /invalid MCP tool name/
+  );
+});
+
+test("loadConfig requires explicit enabled tools for active MCP servers", () => {
+  assert.throws(
+    () =>
+      loadConfig({
+        slack_bot_token: "xoxb-test",
+        slack_app_token: "xapp-test",
+        slack_allowed_user_ids: "U1",
+        codex_mcp_server_names: "grafana"
+      }),
+    /explicit non-empty tool list/
+  );
+});
+
+test("loadConfig allows explicit all-tools escape hatch", () => {
+  const config = loadConfig({
+    slack_bot_token: "xoxb-test",
+    slack_app_token: "xapp-test",
+    slack_allowed_user_ids: "U1",
+    codex_mcp_server_names: "grafana",
+    codex_allow_all_mcp_tools: "true"
+  });
+
+  assert.deepEqual(config.mcpServerNames, ["grafana"]);
+  assert.equal(config.allowAllMcpTools, true);
+  assert.deepEqual(config.mcpEnabledTools, {});
 });
 
 test("loadConfig rejects non-positive numeric values", () => {
