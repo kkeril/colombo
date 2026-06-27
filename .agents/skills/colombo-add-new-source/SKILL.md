@@ -15,12 +15,14 @@ Onboarding must call this skill for all source work. Keep MCP discovery, setup p
 
 - Ask one question at a time.
 - If the next source is not already chosen, ask what source the owner wants next; when product or repo evidence exists, recommend the best next source first and say why.
+- If the owner already names multiple sources, do not make them repeat the list. Turn it into one combined source plan, choose the order, and explain the order briefly.
 - GitHub/GitLab code access is the preferred first source when the owner allows it because code reveals integrations, services, jobs, SDKs, and operational systems.
 - Prefer read-only GitHub/GitLab MCP access for private repositories; do not make manual repository transfer the default.
 - Do the work before asking: inspect local files/configs, use existing MCP access, install or prepare the relevant MCP connector when available, and write exact config/env placeholders.
 - Explain only what matters to the owner: why this source helps, what they need to fill locally, what sample was checked, and what Colombo will use the source for.
 - Use only read-only MCP tools, local repo reads, and narrow metadata/sample queries.
 - Ask the owner to put private auth values in the exact local config/env file and reply `done`; do not ask for values in chat.
+- Batch missing local placeholders into one owner action when they belong in the same file. If a connector needs a separate UI step, ask that as the next single action.
 - Discover exposed MCP tool names and write only owner-approved read-only tools into `codex_mcp_enabled_tools`.
 - MCP server access must also be read-only at the provider level; the Codex sandbox does not make external systems read-only.
 
@@ -37,6 +39,26 @@ Onboarding must call this skill for all source work. Keep MCP discovery, setup p
 9. **Show value.** Generate one realistic operational question from the source sample and answer it in Colombo's Slack answer format as a demo.
 10. **Update files after approval.** Update `AGENTS.md`, optional `workspace/connected-systems/<slug>.md`, and `workspace/test-messages/<slug>.md`. Add `codex_mcp_server_names` and `codex_mcp_enabled_tools` notes only for approved runtime access.
 11. **Suggest the next source.** Based on the sample and product knowledge, recommend the next source only when it would improve answers. Ask for approval: `Connect <recommended source> next, choose another source, or stop here?`
+
+## When the owner names multiple sources
+
+If the owner names a list such as `PostHog, ClickHouse, GitHub repo, Intercom, Jira`, handle it as a batch setup request without turning it into a long interview.
+
+1. Acknowledge the list and sort it into an evidence-first order.
+2. Prepare MCP/config placeholders for every requested source that can be prepared safely.
+3. Ask one local setup action if all missing values can go into one file; otherwise ask the smallest next connector-specific action.
+4. After access works, fetch one narrow safe sample per source.
+5. Show one combined source plan with compact bullets for each source: use when, do not use for, cross-check with, safe-output rules, approved read-only tools.
+6. Ask one approval question for the full plan. Let the owner correct one source without restarting the whole setup.
+7. Generate realistic Slack test messages that combine sources, because the user value comes from cross-checking.
+
+For a B2B SaaS invoicing company with PostHog, ClickHouse, GitHub repo, Intercom, and Jira, prefer this order unless live evidence points elsewhere:
+
+- **GitHub repo** first: understand invoice models, billing flows, payment links, PDF/tax logic, jobs, integrations, and event names.
+- **ClickHouse** second: inspect invoice and product-event tables for operational truth about invoice creation, send, view, payment, failure, and tenant/customer segmentation.
+- **PostHog** third: inspect product funnels and adoption around invoice creation, send, reminders, payment links, and activation. Do not treat analytics as accounting truth.
+- **Intercom** fourth: inspect customer-reported pain, affected accounts, support tags, and user language. Do not treat support volume as full blast radius.
+- **Jira** fifth: inspect known work, planned fixes, incidents, migrations, and product decisions. Do not treat Jira as deployed/runtime truth.
 
 ## Missing access ask template
 
@@ -92,6 +114,8 @@ Demo question: `@colombo ...`
 
 Ask: `Approve this source behavior for Colombo, or what should I change?`
 
+For multi-source setup, use the same fields but make one compact plan for all sources. Ask: `Approve this full source plan, or tell me which source to adjust?`
+
 ## Dynamic Slack test message rules
 
 Test messages must match the owner's actual system, sampled data shape, repo structure, and purpose. Avoid toy prompts.
@@ -102,8 +126,10 @@ Test messages must match the owner's actual system, sampled data shape, repo str
 - Payments: payment state, revenue movement, failed charges, refunds, subscriptions, and analytics cross-checks.
 - Product analytics: funnels, activation, retention, cohorts, and payments/deploy cross-checks.
 - Databases/customer systems: customer state, account/order status, safe summaries, and blast radius.
+- Support/ticketing: customer-reported pain, affected accounts, duplicate reports, escalation context, and safe customer-facing summaries.
+- Work tracking: known issues, planned fixes, owner teams, incidents, migrations, and product decisions; cross-check deploy/runtime systems before claiming live behavior.
 - Docs/runbooks: known procedures, caveats, and what to check next.
 
 ## Quality bar
 
-The owner should experience this as: Colombo asks about the next source, installs or prepares MCP, asks for local setup only in the right file, fetches a small data sample, uses product knowledge to explain when to address this source, asks for approval, then updates the runtime instructions. The final update must make clear which exact MCP tools are approved for runtime and what Colombo should not conclude from this source alone.
+The owner should experience this as: Colombo asks about the next source or accepts the source list they already gave, installs or prepares MCP, asks for local setup only in the right file, fetches a small data sample, uses product knowledge to explain when to address each source, asks for approval, then updates the runtime instructions. The final update must make clear which exact MCP tools are approved for runtime and what Colombo should not conclude from each source alone.
