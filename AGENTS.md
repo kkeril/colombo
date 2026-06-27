@@ -243,17 +243,17 @@ Steps:
 
 ### Runbook: add or improve connected-system instructions
 
-Use during onboarding, source addition, or owner-approved improvement sessions.
+Use during onboarding, source addition, or owner-approved improvement sessions. The goal is not to interview the owner; it is to make source setup feel like Colombo is taking care of the work.
 
 Steps:
-1. Ask what real system is being added or improved.
-2. Ask which MCP server and read-only tools expose it.
-3. Ask what questions Colombo should answer with it.
-4. Ask what the system is reliable for and not reliable for.
-5. Ask what sensitive fields or outputs must be redacted.
-6. Ask what other systems must cross-check it.
-7. Update `AGENTS.md` and, when useful, `workspace/connected-systems/<system>.md`.
-8. Generate realistic Slack test messages in `workspace/test-messages/<system>.md`.
+1. If the source is not already named, ask what source Colombo should connect next. When product, repo, or sample evidence points to a better next source, recommend it first and explain why.
+2. Prepare or use MCP access before asking the owner to act: inspect local config, install or template the connector when available, and add exact local placeholders.
+3. Ask for one owner action: fill the exact file or UI values locally and reply `done`. Do not ask the owner to paste private values in chat.
+4. After `done`, verify read-only access, list the exact read-only tools, and reject write-capable tools for runtime.
+5. Fetch a narrow safe data sample and use it with product knowledge to draft when Colombo should use this source.
+6. Ask the owner to approve or correct the source behavior, limits, cross-checks, safe-output rules, and read-only tool allowlist.
+7. After approval, update `AGENTS.md`, optional `workspace/connected-systems/<system>.md`, and realistic Slack tests in `workspace/test-messages/<system>.md`.
+8. Recommend the next useful source only when it would improve answers, and ask whether to connect it, choose another source, or stop.
 
 ## Answer contract
 
