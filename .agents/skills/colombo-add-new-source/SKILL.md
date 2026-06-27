@@ -15,6 +15,7 @@ Onboarding must call this skill for all source work. Keep MCP discovery, setup p
 
 - Ask one question at a time.
 - If the next source is not already chosen, ask what source the owner wants next; when product or repo evidence exists, recommend the best next source first and say why.
+- If the owner names exactly one source, accept that source and make it useful before suggesting anything else. Do not turn a single-source request into source shopping.
 - If the owner already names multiple sources, do not make them repeat the list. Turn it into one combined source plan, choose the order, and explain the order briefly.
 - GitHub/GitLab code access is the preferred first source when the owner allows it because code reveals integrations, services, jobs, SDKs, and operational systems.
 - Prefer read-only GitHub/GitLab MCP access for private repositories; do not make manual repository transfer the default.
@@ -38,7 +39,28 @@ Onboarding must call this skill for all source work. Keep MCP discovery, setup p
 8. **Ask for approval.** Ask the owner to approve or correct the source contract and read-only MCP allowlist. Do not write durable rules until approved.
 9. **Show value.** Generate one realistic operational question from the source sample and answer it in Colombo's Slack answer format as a demo.
 10. **Update files after approval.** Update `AGENTS.md`, optional `workspace/connected-systems/<slug>.md`, and `workspace/test-messages/<slug>.md`. Add `codex_mcp_server_names` and `codex_mcp_enabled_tools` notes only for approved runtime access.
-11. **Suggest the next source.** Based on the sample and product knowledge, recommend the next source only when it would improve answers. Ask for approval: `Connect <recommended source> next, choose another source, or stop here?`
+11. **Offer the next useful step.** For one source, do not push more sources immediately. Ask: `Move on to Slack/Docker launch, connect another source, or stop here?` Recommend another source only if the current sample exposed a clear gap that would block good answers.
+
+## When the owner names one source
+
+If the owner names one source such as `PostHog`, handle it as a complete first activation path. Do not ask them to choose the next source again, and do not redirect to GitHub unless the owner asks for a recommendation or the named source cannot produce a useful demo.
+
+1. Acknowledge the source and explain its immediate value in product language.
+2. Prepare the MCP config/template and exact local placeholders first.
+3. Ask one local setup action: fill the exact local values and reply `done`.
+4. After access works, fetch one narrow safe sample from that source.
+5. Show one compact source contract: use when, do not use for, cross-check with, safe-output rules, approved read-only tools, and one demo question.
+6. Ask one approval question for that source.
+7. Show a demo answer based only on that source and clearly label what it cannot prove.
+8. Only after the demo and approval, ask whether to launch, connect another source, or stop.
+
+For a B2B SaaS invoicing company that chooses **PostHog only**, treat PostHog as useful for product behavior, not financial or runtime truth:
+
+- Use for: invoice creation funnel, send/view/payment-link click behavior, reminder usage, activation, retention, feature adoption, segment/cohort movement.
+- Sample: event names, funnel definitions, feature flags, cohorts, and a small aggregate preview around invoice-related events.
+- Do not use for: settled revenue, invoice legal/accounting truth, failed background jobs, live incidents, or whether a customer paid.
+- Cross-check later, if approved: ClickHouse or app DB for invoice lifecycle truth, payments for settlement, GitHub for implementation, Intercom for customer-reported pain.
+- Good first demo: `@colombo did invoice creation drop this week, and which step looks weakest?`
 
 ## When the owner names multiple sources
 
@@ -132,4 +154,4 @@ Test messages must match the owner's actual system, sampled data shape, repo str
 
 ## Quality bar
 
-The owner should experience this as: Colombo asks about the next source or accepts the source list they already gave, installs or prepares MCP, asks for local setup only in the right file, fetches a small data sample, uses product knowledge to explain when to address each source, asks for approval, then updates the runtime instructions. The final update must make clear which exact MCP tools are approved for runtime and what Colombo should not conclude from each source alone.
+The owner should experience this as: Colombo accepts the source they named, installs or prepares MCP, asks for local setup only in the right file, fetches a small data sample, uses product knowledge to explain when to address the source, asks for approval, then updates the runtime instructions. For one source, Colombo must not push extra integrations before it has produced a useful demo and asked whether to launch, connect another source, or stop. The final update must make clear which exact MCP tools are approved for runtime and what Colombo should not conclude from each source alone.
