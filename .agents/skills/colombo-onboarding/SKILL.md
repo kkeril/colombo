@@ -16,7 +16,7 @@ Use this skill to turn a freshly cloned Colombo repo into a private company work
 - Ask less, infer more: inspect the website, repo, configs, manifests, and MCP capabilities before asking.
 - Keep one user action at a time; save long checklists for the final launch checklist.
 - Do the work when possible: use approved MCP/local access instead of asking the owner to perform manual inspection.
-- Preserve momentum: if the owner already names multiple sources, do not ask them to choose again; turn the list into a source plan and hand it to `$colombo-add-new-source`.
+- Preserve momentum: if the owner already names one source, use that source; if they name multiple sources, turn the list into a source plan and hand it to `$colombo-add-new-source`. Do not ask them to choose again.
 - Be clear about blockers: ask for the smallest enabling action and explain the payoff.
 - Filter choices: suggest relevant next sources, not every detected dependency.
 - Keep trust: stay read-only, do not write secrets to tracked files, and do not broadly copy the owner's Codex config.
@@ -49,8 +49,9 @@ Use this skill to turn a freshly cloned Colombo repo into a private company work
 - Do not copy the owner's full Codex config. Build a minimal runtime Codex config under `/etc/colombo/codex` with only Colombo-approved MCP servers and read-only tool lists.
 - Confirm Docker and Docker Compose before launch, not before first value. If missing, give the host-OS install step and include it in the final checklist.
 - Treat MCP as the access layer, not the source of truth. Connected systems are the real sources: GitHub, GitLab, Grafana, Datadog, Sentry, Loki, Supabase, Postgres, ClickHouse, Stripe, Paddle, PostHog, Amplitude, Google Analytics, Intercom, Jira, Notion, Confluence, Google Docs, customer systems, deploy systems, and similar tools.
-- Ask for GitHub/GitLab first in outcome language: "The fastest way for Colombo to understand your product is to inspect the product repo. After you reply, I'll use or install the relevant read-only GitHub/GitLab MCP connector when available and ask you to put the credentials in `/etc/colombo.env` or the runtime Codex config, not paste secrets here. Which GitHub or GitLab repo contains the code for this product?"
+- Ask for GitHub/GitLab first in outcome language only when the owner has not already chosen a source: "The fastest way for Colombo to understand your product is to inspect the product repo. After you reply, I'll use or install the relevant read-only GitHub/GitLab MCP connector when available and ask you to put the credentials in `/etc/colombo.env` or the runtime Codex config, not paste secrets here. Which GitHub or GitLab repo contains the code for this product?"
 - If the owner provides a repo, invoke `$colombo-add-new-source` for `GitHub or GitLab repository/code`.
+- If the owner provides exactly one non-repo source, such as `PostHog`, invoke `$colombo-add-new-source` for that source. Do not steer them back to GitHub unless the named source cannot produce a useful demo.
 - If the owner provides a list of sources, such as `PostHog, ClickHouse, GitHub repo, Intercom, Jira`, invoke `$colombo-add-new-source` with the full list. Let that skill sort the evidence-first order, prepare MCP/config placeholders, sample each source, and ask for one approval plan.
 - If the owner declines repo access, ask: "No problem. Where does your operational data live today? For example: Grafana/Datadog/Sentry for observability, Supabase/Postgres/ClickHouse for app, warehouse, or customer data, PostHog/Amplitude/GA for product analytics, Stripe/Paddle for payments, Intercom for support, Jira for work tracking, Notion/Confluence/Google Docs for runbooks, or something else."
 - After the owner names a fallback tool such as PostHog, immediately invoke `$colombo-add-new-source` for that source. Do not ask for project names, links, tokens, or credentials in onboarding; the source skill must prepare the connector/config placeholders first and then make one exact owner ask.
@@ -75,18 +76,20 @@ After the owner answers, fetch the public website, draft a concise product/compa
 1. Confirm the repo is the owner's private Colombo workspace.
 2. Verify Codex on the VPS. If unavailable or unauthenticated, provide the minimal fix and stop there.
 3. Give the exact welcome opening, ask for the website, summarize the product, get approval, and update `AGENTS.md`.
-4. Ask for the product GitHub/GitLab repo using the outcome-language prompt above, unless the owner already gave a source list.
+4. Ask for the product GitHub/GitLab repo using the outcome-language prompt above, unless the owner already gave one source or a source list.
 5. If a repo is provided, invoke `$colombo-add-new-source` for `GitHub or GitLab repository/code`; if the skill is not loaded, read `.agents/skills/colombo-add-new-source/SKILL.md` and follow it.
-6. If the owner already named multiple sources, pass the whole list to `$colombo-add-new-source`; do not ask them to select the next one again.
-7. If the owner declines repo access, ask where operational data lives today with examples: Grafana/Datadog/Sentry, Supabase/Postgres/ClickHouse, PostHog/Amplitude/GA, Stripe/Paddle, Intercom, Jira, Notion/Confluence/Google Docs, or another tool.
-8. For any fallback source, immediately invoke `$colombo-add-new-source`; for example, if the owner says `PostHog`, invoke it for `PostHog`. If no new access is allowed, inspect configured MCP sources and choose the best demo path.
-9. Let `$colombo-add-new-source` verify access, sample narrowly, produce the demo answer, and return a filtered source plan or shortlist of relevant next sources.
-10. If the owner gave multiple sources upfront, do not make them re-approve each source one by one. Ask for approval on the compact combined source plan and only drill into sources they correct.
-11. Ask the owner to choose one next source or stop only when no source list was already provided; invoke `$colombo-add-new-source` for each chosen source.
-12. After a source-backed demo answer, ask which Slack workspace should use Colombo, which Slack users belong in `slack_allowed_user_ids`, and what Slack channel/visibility policy the owner wants documented in `AGENTS.md`.
-13. Confirm Docker and Docker Compose before launch; if missing, provide install steps and pause deployment commands.
-14. Ask where Colombo should live only if unclear; default to `/opt/colombo`.
-15. End with a short launch checklist covering env values, `/etc/colombo/codex`, approved MCP servers, approved read-only tool allowlists for `codex_mcp_enabled_tools`, any missing MCP servers, Slack scopes/events, Slack visibility policy, required paths (`/etc/colombo.env`, `/etc/colombo/codex`, `/var/lib/colombo`), minimal runtime Codex config steps, ownership commands such as `sudo chown -R 1000:1000 /opt/colombo /etc/colombo/codex /var/lib/colombo`, Docker commands (`docker compose build`, `docker compose up -d`, `docker compose logs -f colombo`), generated test messages, and local checks.
+6. If the owner already named exactly one source, pass that source to `$colombo-add-new-source`; do not ask them to select the next one again.
+7. If the owner already named multiple sources, pass the whole list to `$colombo-add-new-source`; do not ask them to select the next one again.
+8. If the owner declines repo access, ask where operational data lives today with examples: Grafana/Datadog/Sentry, Supabase/Postgres/ClickHouse, PostHog/Amplitude/GA, Stripe/Paddle, Intercom, Jira, Notion/Confluence/Google Docs, or another tool.
+9. For any fallback source, immediately invoke `$colombo-add-new-source`; for example, if the owner says `PostHog`, invoke it for `PostHog`. If no new access is allowed, inspect configured MCP sources and choose the best demo path.
+10. Let `$colombo-add-new-source` verify access, sample narrowly, produce the demo answer, and return a source plan or a filtered shortlist of relevant next sources.
+11. If the owner gave one source upfront, do not pitch more sources before the demo. After the demo, ask whether to move to Slack/Docker launch, connect another source, or stop.
+12. If the owner gave multiple sources upfront, do not make them re-approve each source one by one. Ask for approval on the compact combined source plan and only drill into sources they correct.
+13. Ask the owner to choose one next source or stop only when no source was already provided; invoke `$colombo-add-new-source` for each chosen source.
+14. After a source-backed demo answer, ask which Slack workspace should use Colombo, which Slack users belong in `slack_allowed_user_ids`, and what Slack channel/visibility policy the owner wants documented in `AGENTS.md`.
+15. Confirm Docker and Docker Compose before launch; if missing, provide install steps and pause deployment commands.
+16. Ask where Colombo should live only if unclear; default to `/opt/colombo`.
+17. End with a short launch checklist covering env values, `/etc/colombo/codex`, approved MCP servers, approved read-only tool allowlists for `codex_mcp_enabled_tools`, any missing MCP servers, Slack scopes/events, Slack visibility policy, required paths (`/etc/colombo.env`, `/etc/colombo/codex`, `/var/lib/colombo`), minimal runtime Codex config steps, ownership commands such as `sudo chown -R 1000:1000 /opt/colombo /etc/colombo/codex /var/lib/colombo`, Docker commands (`docker compose build`, `docker compose up -d`, `docker compose logs -f colombo`), generated test messages, and local checks.
 
 ## Files this skill may update
 
@@ -101,7 +104,8 @@ After the owner answers, fetch the public website, draft a concise product/compa
 ## Done criteria
 
 - `AGENTS.md` contains the approved company product description.
-- GitHub/GitLab repository/code is connected first, or the owner declined repo access and a fallback operational source was connected.
+- GitHub/GitLab repository/code is connected first, or the owner chose another source and that source produced a useful demo.
+- If the owner gave one source upfront, that source was connected without repeated source-selection questions.
 - If the owner gave multiple sources upfront, the full list was turned into a compact source plan instead of repeated source-selection questions.
 - A source-backed demo Colombo answer has been shown.
 - Relevant next sources were detected and filtered before asking the owner what to add.
