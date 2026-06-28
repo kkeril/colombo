@@ -12,6 +12,23 @@ Mention `@colombo` in Slack. Colombo starts a read-only Codex investigation thro
 
 ![Real Colombo request](colombo_request.png)
 
+## Table of contents
+
+- [Who it is for](#who-it-is-for)
+- [Why this exists](#why-this-exists)
+- [What it does](#what-it-does)
+- [How to set up](#how-to-set-up)
+  - [Prerequisites](#prerequisites)
+  - [Onboard a private workspace](#onboard-a-private-workspace)
+  - [Slack app](#slack-app)
+  - [Runtime configuration](#runtime-configuration)
+  - [Docker launch](#docker-launch)
+- [Features](#features)
+- [Why not just vibecode it myself?](#why-not-just-vibecode-it-myself)
+- [Contributing](#contributing)
+- [Publishing / release hygiene](#publishing--release-hygiene)
+- [License](#license)
+
 ## Who it is for
 
 Colombo is for small teams where work often stops until the right colleague replies: the person who knows the code, infra, funnel, payments, support history, or customer state.
