@@ -60,7 +60,12 @@ What is your company or product website?
 
 Use these handoffs:
 
-- If no source was chosen yet, ask: `The fastest way for Colombo to understand your product is to inspect the product repo. After you reply, I'll use or install the relevant read-only GitHub/GitLab MCP connector when available and ask you to put the credentials in `/etc/colombo.env` or the runtime Codex config, not paste secrets here. Which GitHub or GitLab repo contains the code for this product?`
+- If no source was chosen yet, ask this prompt:
+
+  ```text
+  The fastest way for Colombo to understand your product is to inspect the product repo. After you reply, I'll use or install the relevant read-only GitHub/GitLab MCP connector when available and ask you to put the credentials in `/etc/colombo.env` or the runtime Codex config, not paste secrets here. Which GitHub or GitLab repo contains the code for this product?
+  ```
+
 - If the owner provides a repo, invoke `$colombo-add-new-source` for `GitHub or GitLab repository/code`.
 - If the owner provides exactly one non-repo source, such as `PostHog`, invoke `$colombo-add-new-source` for that source. Do not steer them back to GitHub unless the named source cannot produce a useful demo.
 - If the owner provides a list of sources, such as `PostHog, ClickHouse, GitHub repo, Intercom, Jira`, invoke `$colombo-add-new-source` with the full list.
